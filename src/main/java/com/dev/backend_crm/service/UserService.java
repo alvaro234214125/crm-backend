@@ -30,8 +30,7 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
-
-
+    private final ActivityLogService activityLogService;
 
     public UserDto getByEmail(String email){
         User user = userRepository.findByEmail(email)
@@ -39,11 +38,20 @@ public class UserService implements UserDetailsService {
         return toDto(user);
     }
 
-    public UserDto register(UserDto userDto) {
+    public UserDto register(UserDto userDto, String performedBy) {
         User user = fromDto(userDto);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setCreatedAt(new Date());
         User savedUser = userRepository.save(user);
+
+        activityLogService.log(
+                "CREATE_USER",
+                "Registró al usuario: " + savedUser.getEmail(),
+                "User",
+                savedUser.getId(),
+                performedBy
+        );
+
         return toDto(savedUser);
     }
 
@@ -119,7 +127,7 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    public UserDto updateUser(Long id, UserDto userDto) {
+    public UserDto updateUser(Long id, UserDto userDto, String performedBy) {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -132,14 +140,26 @@ public class UserService implements UserDetailsService {
             existingUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
         }
 
-        return toDto(userRepository.save(existingUser));
+        User updatedUser = userRepository.save(existingUser);
+
+        activityLogService.log(
+                "UPDATE_USER",
+                "Actualizó al usuario: " + updatedUser.getEmail(),
+                "User",
+                updatedUser.getId(),
+                performedBy
+        );
+
+        return toDto(updatedUser);
     }
 
-    public void deleteUser(Long id) {
+    public void deleteUser(Long id, String performedBy) {
         if (!userRepository.existsById(id)) {
             throw new RuntimeException("User not found");
         }
         userRepository.deleteById(id);
+
+        activityLogService.log("DELETE_USER", "Eliminó al usuario con ID: " + id, "User", id, performedBy);
     }
 
     public UserStatsDto getUserStats() {

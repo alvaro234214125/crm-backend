@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,20 +47,20 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public UserDto createUser(@RequestBody UserDto userDto) {
-        return userService.register(userDto);
+    public UserDto createUser(@RequestBody UserDto userDto, Authentication auth) {
+        return userService.register(userDto, userService.getByEmail(auth.getName()).getName());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public UserDto updateUser(@PathVariable Long id, @RequestBody UserDto userDto) {
-        return userService.updateUser(id, userDto);
+    public UserDto updateUser(@PathVariable Long id, @RequestBody UserDto userDto, Authentication auth) {
+        return userService.updateUser(id, userDto, userService.getByEmail(auth.getName()).getName());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+    public ResponseEntity<?> deleteUser(@PathVariable Long id, Authentication auth) {
+        userService.deleteUser(id, userService.getByEmail(auth.getName()).getName());
         return ResponseEntity.ok().build();
     }
 

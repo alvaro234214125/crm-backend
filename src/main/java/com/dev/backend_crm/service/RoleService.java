@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 public class RoleService {
 
     private final RoleRepository roleRepository;
+    private final ActivityLogService activityLogService;
 
     public PageResponse<RoleDto> findAll(Pageable pageable) {
         Page<Role> page = roleRepository.findAll(pageable);
@@ -37,14 +38,25 @@ public class RoleService {
         );
     }
 
-    public RoleDto save(RoleDto roleDto){
+    public RoleDto save(RoleDto roleDto, String performedBy){
         Role role = roleFromDto(roleDto);
+        boolean isNew = role.getId() == null;
         Role savedRole = roleRepository.save(role);
+
+        activityLogService.log(
+                isNew ? "CREATE_ROLE" : "UPDATE_ROLE",
+                (isNew ? "Creó" : "Actualizó") + " el rol: " + savedRole.getName(),
+                "Role",
+                savedRole.getId(),
+                performedBy
+        );
+
         return roleToDto(savedRole);
     }
 
-    public void remove(Long id){
+    public void remove(Long id, String performedBy){
         roleRepository.deleteById(id);
+        activityLogService.log("DELETE_ROLE", "Eliminó el rol con ID: " + id, "Role", id, performedBy);
     }
 
     public boolean existsById(Long id){

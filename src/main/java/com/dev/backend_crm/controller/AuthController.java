@@ -34,7 +34,7 @@ public class AuthController {
                 .role(request.getRole())
                 .status(request.getStatus())
                 .build();
-        userService.register(userDto);
+        userService.register(userDto, "anonymous");
         String token = jwtService.generarToken(userDto.getEmail());
         return new AuthResponse(token);
     }
