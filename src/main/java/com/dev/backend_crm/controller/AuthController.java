@@ -58,7 +58,7 @@ public class AuthController {
             return ResponseEntity.status(401).build();
         }
 
-        String email = authentication.getName(); // viene del token (sub)
+        String email = authentication.getName();
         UserDto user = userService.getByEmail(email);
         return ResponseEntity.ok(user);
     }
